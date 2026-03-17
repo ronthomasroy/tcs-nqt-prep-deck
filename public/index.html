@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TCS NQT 2026 — 7-Day Tracker</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body, #root { height: 100%; }
+    body { background: #07090f; color: #e2e8f0; font-family: 'Courier New', monospace; overflow: hidden; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: #0a0d18; }
+    ::-webkit-scrollbar-thumb { background: #1e2d45; border-radius: 2px; }
+    a { transition: opacity 0.15s; }
+    a:hover { opacity: 0.8; }
+    button { transition: all 0.15s; }
+    .toast { position:fixed; bottom:24px; right:24px; background:#0f2040; border:1px solid #3b82f6; color:#93c5fd; padding:10px 16px; border-radius:6px; font-size:11px; font-family:'Courier New',monospace; z-index:9999; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+const API = "http://localhost:3000/api";
+const GH = "https://github.com/karthikreddy-7/TCS-NQT-CODING-SHEET/blob/main";
+const GH_TREE = "https://github.com/karthikreddy-7/TCS-NQT-CODING-SHEET/tree/main";
+
+// ── Data ──────────────────────────────────────────────────────────────────────
+const days = [
+  {
+    day: 1, label: "Sat, Mar 14",
+    theme: "Numerical Ability + Number Coding",
+    tag: "NUMERICAL + CODING", tagColor: "#F59E0B", hours: "3 hrs",
+    aptitudeFocus: "Number System · LCM & HCF · Percentages · Averages · Allegations & Mixtures · SI & CI",
+    codingFocus: "Number Problems — Primes, Palindromes, Fibonacci, GCD/LCM, Armstrong + Base Conversions",
+    sessions: [
+      {
+        time: "0:00 – 1:00", type: "Aptitude", coding: false,
+        title: "📐 APTITUDE — Number System, LCM/HCF, Percentages, Averages, SI & CI",
+        desc: "Divisibility rules (2,3,4,5,6,9,11). Prime factorization, LCM/HCF via Euclidean algorithm. Percentage change shortcuts, successive % change. Weighted averages. Alligation cross-method for mixtures & partnerships. SI vs CI difference formula for 2 & 3 years. Solve 25 questions on IndiaBix.",
+      },
+      {
+        time: "1:00 – 2:00", type: "Coding", coding: true, diff: "Easy",
+        title: "⚙ CODING — Core Number Problems (GitHub Sheet)",
+        desc: "Core number patterns TCS repeats every year. Write each from scratch — don't just read the solution. Trace your code with a sample input before moving on.",
+        problems: [
+          { name: "Palindrome Number Check", url: `${GH}/Problems_On_Number/PalindromeCheck.java` },
+          { name: "Prime Number Check", url: `${GH}/Problems_On_Number/PrimeCheck.java` },
+          { name: "Prime Numbers in a Range", url: `${GH}/Problems_On_Number/PrimeNumbersInRange.java` },
+          { name: "Armstrong Number Check", url: `${GH}/Problems_On_Number/ArmstrongCheck.java` },
+          { name: "Fibonacci Series (iterative)", url: `${GH}/Problems_On_Number/FibonacciSeries.java` },
+          { name: "Factorial of a Number", url: `${GH}/Problems_On_Number/Factorial.java` },
+          { name: "GCD of Two Numbers", url: `${GH}/Problems_On_Number/GCD.java` },
+          { name: "LCM of Two Numbers", url: `${GH}/Problems_On_Number/LCM.java` },
+          { name: "Sum of Digits", url: `${GH}/Problems_On_Number/SumOfDigits.java` },
+          { name: "Reverse Digits of a Number", url: `${GH}/Problems_On_Number/ReverseDigits.java` },
+        ],
+      },
+      {
+        time: "2:00 – 3:00", type: "Coding", coding: true, diff: "Easy–Medium",
+        title: "⚙ CODING — More Number Problems + Base Conversions + PYQ",
+        desc: "Number type checkers (Strong, Perfect, Automorphic, Harshad). Series sums. Number system conversions — Binary↔Decimal↔Octal are direct TCS coding topics. Finish with the Binary Toggle Previously Asked Question.",
+        problems: [
+          { name: "Strong Number Check", url: `${GH}/Problems_On_Number/StrongNumberCheck.java` },
+          { name: "Perfect Number Check", url: `${GH}/Problems_On_Number/PerfectNumberCheck.java` },
+          { name: "Automorphic Number Check", url: `${GH}/Problems_On_Number/AutomorphicCheck.java` },
+          { name: "Harshad Number Check", url: `${GH}/Problems_On_Number/HarshadCheck.java` },
+          { name: "Sum of AP Series", url: `${GH}/Problems_On_Number/SumOfAPSeries.java` },
+          { name: "Sum of GP Series", url: `${GH}/Problems_On_Number/SumOfGPSeries.java` },
+          { name: "Binary to Decimal", url: `${GH}/Problems_On_Number_System/BinaryToDecimal.java` },
+          { name: "Decimal to Binary", url: `${GH}/Problems_On_Number_System/DecimalToBinary.java` },
+          { name: "Octal to Decimal", url: `${GH}/Problems_On_Number_System/OctalToDecimal.java` },
+          { name: "🌟 PYQ: Binary Toggle", url: `${GH}/Previously_Asked_Coding_Question/Binary_Representation.java` },
+        ],
+      },
+    ],
+    resources: [
+      { name: "IndiaBix — Quantitative Aptitude", url: "https://www.indiabix.com/aptitude/questions-and-answers/", type: "apt" },
+      { name: "PrepInsta TCS NQT Quant", url: "https://prepinsta.com/tcs-nqt/aptitude/", type: "apt" },
+      { name: "🔗 GitHub: Problems on Number", url: `${GH_TREE}/Problems_On_Number`, type: "code" },
+      { name: "🔗 GitHub: Number System Conversions", url: `${GH_TREE}/Problems_On_Number_System`, type: "code" },
+    ],
+    tip: "Day 1 sets the coding habit. Write each solution yourself, then compare with GitHub. Understanding WHY it works beats copying it every time.",
+  },
+  {
+    day: 2, label: "Sun, Mar 15",
+    theme: "Reasoning Ability + Array Coding",
+    tag: "REASONING + CODING", tagColor: "#8B5CF6", hours: "3 hrs",
+    aptitudeFocus: "Series · Coding-Decoding · Blood Relations · Seating Arrangement · Syllogism · Order & Ranking · DI",
+    codingFocus: "Array Manipulation — Traversal, Search, Min/Max, Duplicates, Frequency",
+    sessions: [
+      {
+        time: "0:00 – 1:00", type: "Aptitude", coding: false,
+        title: "📐 APTITUDE — Full Reasoning Foundation",
+        desc: "Number & Alpha-numeric Series patterns (arithmetic, geometric, squares, alternating). Letter coding (A=1, Z=26). Blood relation trees — always draw the family chart first. Linear & Circular Seating — always draw before answering. Syllogism via Venn diagrams (All, No, Some). Order & Ranking — read directions carefully. Do 10 Qs per topic on IndiaBix.",
+      },
+      {
+        time: "1:00 – 1:30", type: "Aptitude", coding: false,
+        title: "📐 APTITUDE — Data Interpretation (Tables, Bar, Pie)",
+        desc: "DI appears in both Foundation Reasoning and Numerical sections. Practice reading tables, bar charts, pie charts fast. Strategy: don't calculate everything — only what each question actually needs. Solve 3 complete DI sets. Approximate with % estimation rather than exact division.",
+      },
+      {
+        time: "1:30 – 3:00", type: "Coding", coding: true, diff: "Easy–Medium",
+        title: "⚙ CODING — All Array Problems (GitHub Sheet)",
+        desc: "Arrays are the most tested data structure in TCS coding. Master every standard operation. Always test with edge cases: empty array, single element, all duplicates, negatives.",
+        problems: [
+          { name: "Find Smallest in Array", url: `${GH}/Problems_on_Arrays/SmallInArray.java` },
+          { name: "Find Largest in Array", url: `${GH}/Problems_on_Arrays/LargeInArray.java` },
+          { name: "Second Smallest & Largest", url: `${GH}/Problems_on_Arrays/SecondLargeAndSmall.java` },
+          { name: "Reverse an Array", url: `${GH}/Problems_on_Arrays/ReverseArray.java` },
+          { name: "Count Frequency of Elements", url: `${GH}/Problems_on_Arrays/FrequencyArray.java` },
+          { name: "Sum of Array Elements", url: `${GH}/Problems_on_Arrays/SumOfArray.java` },
+          { name: "Average of Array", url: `${GH}/Problems_on_Arrays/AverageOfArray.java` },
+          { name: "Median of Array", url: `${GH}/Problems_on_Arrays/MedianOfArray.java` },
+          { name: "Find Repeating Elements", url: `${GH}/Problems_on_Arrays/FindRepeatingElements.java` },
+          { name: "Find Non-Repeating Elements", url: `${GH}/Problems_on_Arrays/FindNonRepeatingElements.java` },
+          { name: "Remove Duplicates (Sorted)", url: `${GH}/Problems_on_Arrays/RemoveDuplicatesSorted.java` },
+          { name: "Remove Duplicates (Unsorted)", url: `${GH}/Problems_on_Arrays/RemoveDuplicatesUnsorted.java` },
+          { name: "Search an Element", url: `${GH}/Problems_on_Arrays/SearchElement.java` },
+          { name: "Rearrange Increasing-Decreasing", url: `${GH}/Problems_on_Arrays/RearrangeArray.java` },
+        ],
+      },
+    ],
+    resources: [
+      { name: "IndiaBix — Logical Reasoning", url: "https://www.indiabix.com/logical-reasoning/questions-and-answers/", type: "apt" },
+      { name: "PrepInsta TCS NQT Reasoning", url: "https://prepinsta.com/tcs-nqt/reasoning/", type: "apt" },
+      { name: "IndiaBix — Data Interpretation", url: "https://www.indiabix.com/data-interpretation/questions-and-answers/", type: "apt" },
+      { name: "🔗 GitHub: Problems on Arrays", url: `${GH_TREE}/Problems_on_Arrays`, type: "code" },
+    ],
+    tip: "Array problems test edge-case thinking. Always mentally run: empty array, single element, all same, negative numbers. TCS often sets traps at boundaries.",
+  },
+  {
+    day: 3, label: "Mon, Mar 16",
+    theme: "Verbal + Remaining Quant + String Coding",
+    tag: "VERBAL + CODING", tagColor: "#10B981", hours: "3 hrs",
+    aptitudeFocus: "RC · Grammar · Synonyms/Antonyms · Para-jumbles · Error Correction · TSD · Time & Work · Clocks & Calendars",
+    codingFocus: "String Manipulation — Palindrome, Anagram, Reverse, Frequency, Duplicates",
+    sessions: [
+      {
+        time: "0:00 – 0:50", type: "Aptitude", coding: false,
+        title: "📐 APTITUDE — Verbal Ability Full Coverage",
+        desc: "Tenses (12 types), Conjunctions (FANBOYS + subordinating), Prepositions (at/in/on/by/since/for). RC strategy: skim → read questions → answer. Sentence rearrangement: find topic sentence first, then conclusion. Para-jumbles: look for connector words (However, Therefore, Moreover). Study 30 high-frequency TCS NQT vocab words. Do 2 RC passages + 30 error-spotting + 10 para-jumble sets.",
+      },
+      {
+        time: "0:50 – 1:20", type: "Aptitude", coding: false,
+        title: "📐 APTITUDE — TSD · Time & Work · Clocks & Calendars",
+        desc: "Time-Speed-Distance: relative speed (same/opposite direction). Work = (1/days), combined work with pipes & cisterns. Clock angle formula: |30H – 5.5M|. Calendar: odd days method for day-of-week. Probability revisit. Do 10 questions per topic on IndiaBix.",
+      },
+      {
+        time: "1:20 – 3:00", type: "Coding", coding: true, diff: "Easy–Medium",
+        title: "⚙ CODING — All String Problems (GitHub Sheet) + PYQ",
+        desc: "Strings are the 2nd most tested topic in TCS. Master the two core patterns: (1) character frequency array of size 26, (2) two-pointer traversal. Most string problems are combinations of these two.",
+        problems: [
+          { name: "String Palindrome Check", url: `${GH}/Problems_On_String/PalindromeCheck.java` },
+          { name: "Count Vowels, Consonants & Spaces", url: `${GH}/Problems_On_String/VowelConsonantSpaceCount.java` },
+          { name: "Reverse a String", url: `${GH}/Problems_On_String/ReverseString.java` },
+          { name: "Reverse Words in String", url: `${GH}/Problems_On_String/ReverseWords.java` },
+          { name: "Remove All Vowels", url: `${GH}/Problems_On_String/RemoveVowels.java` },
+          { name: "Remove Spaces", url: `${GH}/Problems_On_String/RemoveSpaces.java` },
+          { name: "Check Anagram", url: `${GH}/Problems_On_String/AnagramCheck.java` },
+          { name: "Frequency of Characters", url: `${GH}/Problems_On_String/FrequencyOfCharacters.java` },
+          { name: "Max Occurring Character", url: `${GH}/Problems_On_String/MaxOccurringCharacter.java` },
+          { name: "Find Non-Repeating Characters", url: `${GH}/Problems_On_String/NonRepeatingCharacters.java` },
+          { name: "Remove All Duplicates from String", url: `${GH}/Problems_On_String/RemoveDuplicates.java` },
+          { name: "Print Duplicate Characters", url: `${GH}/Problems_On_String/PrintDuplicates.java` },
+          { name: "ASCII Value of Character", url: `${GH}/Problems_On_String/AsciiValue.java` },
+          { name: "Capitalize First & Last of Each Word", url: `${GH}/Problems_On_String/CapitalizeWords.java` },
+          { name: "🌟 PYQ: Push Zeros to End (Chocolate Factory)", url: `${GH}/Previously_Asked_Coding_Question/ChocolateFactory.java` },
+        ],
+      },
+    ],
+    resources: [
+      { name: "IndiaBix — Verbal Ability", url: "https://www.indiabix.com/verbal-ability/questions-and-answers/", type: "apt" },
+      { name: "PrepInsta NQT Verbal + Word List", url: "https://prepinsta.com/tcs-nqt/english/", type: "apt" },
+      { name: "IndiaBix — Clocks & Calendars", url: "https://www.indiabix.com/aptitude/calendar/", type: "apt" },
+      { name: "🔗 GitHub: Problems on String", url: `${GH_TREE}/Problems_On_String`, type: "code" },
+    ],
+    tip: "String problems are mostly solved with just 2 techniques: frequency map (int[26]) and two-pointer. Recognizing which technique applies is half the answer.",
+  },
+  {
+    day: 4, label: "Tue, Mar 17",
+    theme: "Advanced Quant + Sorting & Searching",
+    tag: "ADV QUANT + CODING", tagColor: "#F97316", hours: "3 hrs",
+    aptitudeFocus: "Logarithms · Permutation & Combination · Advanced Probability · Geometry · Mensuration · Higher Equations",
+    codingFocus: "5 Sorting Algorithms + Binary Search + Advanced Array Problems",
+    sessions: [
+      {
+        time: "0:00 – 1:10", type: "Aptitude", coding: false,
+        title: "📐 APTITUDE — Full Advanced Quantitative Section",
+        desc: "Log rules (product/quotient/power/change of base). nPr vs nCr — when to use each. Advanced probability: conditional P(A|B), Bayes' theorem basics. Geometry: circle theorems, triangle properties, coordinate distance. Mensuration: area/volume of sphere, cone, cylinder, cuboid. Quadratic equations, system of equations, inequalities. 5 Qs per topic from PrepInsta Advanced.",
+      },
+      {
+        time: "1:10 – 2:10", type: "Coding", coding: true, diff: "Medium",
+        title: "⚙ CODING — All 5 Sorting Algorithms (GitHub Sheet)",
+        desc: "Write ALL 5 sorting algorithms from scratch — no copy-paste. Trace each on paper with [5,2,8,1,9]. Time complexities: Bubble/Selection/Insertion = O(n²), Quick/Merge = O(n log n). Know WHEN each is used: Insertion sort for nearly-sorted data, Merge sort for linked lists, Quick sort for general use.",
+        problems: [
+          { name: "Bubble Sort", url: `${GH}/Problems_On_Sorting/BubbleSort.java` },
+          { name: "Selection Sort", url: `${GH}/Problems_On_Sorting/SelectionSort.java` },
+          { name: "Insertion Sort", url: `${GH}/Problems_On_Sorting/InsertionSort.java` },
+          { name: "Quick Sort", url: `${GH}/Problems_On_Sorting/QuickSort.java` },
+          { name: "Merge Sort", url: `${GH}/Problems_On_Sorting/MergeSort.java` },
+        ],
+      },
+      {
+        time: "2:10 – 3:00", type: "Coding", coding: true, diff: "Medium–Hard",
+        title: "⚙ CODING — Advanced Array Problems (Rotation, Subarrays, Subsets)",
+        desc: "These harder array problems appear in the Advanced coding section. Rotation and subarray problems test two-pointer and sliding window thinking. Trace each on paper before coding.",
+        problems: [
+          { name: "Rotate Array by K (Block Swap)", url: `${GH}/Problems_on_Arrays/RotateArray.java` },
+          { name: "Circular Rotation by K", url: `${GH}/Problems_on_Arrays/CircularRotation.java` },
+          { name: "Rotation Left & Right", url: `${GH}/Problems_on_Arrays/RotationLeftRight.java` },
+          { name: "Equilibrium Index", url: `${GH}/Problems_on_Arrays/EquilibriumIndex.java` },
+          { name: "Maximum Product Subarray", url: `${GH}/Problems_on_Arrays/MaximumProductSubarray.java` },
+          { name: "Array Subset Check", url: `${GH}/Problems_on_Arrays/ArraySubsetCheck.java` },
+          { name: "Symmetric Pairs in Array", url: `${GH}/Problems_on_Arrays/SymmetricPairs.java` },
+          { name: "SubArrays (all sub-array sums)", url: `${GH}/SubArrays.java` },
+          { name: "Replace Elements by Rank", url: `${GH}/Problems_on_Arrays/ReplaceElementsByRank.java` },
+          { name: "Sort Array by Frequency", url: `${GH}/Problems_on_Arrays/SortByFrequency.java` },
+        ],
+      },
+    ],
+    resources: [
+      { name: "PrepInsta Advanced Quantitative", url: "https://prepinsta.com/tcs-nqt/advanced-quantitative/", type: "apt" },
+      { name: "GFG TCS NQT Advanced", url: "https://www.geeksforgeeks.org/tcs-nqt/", type: "apt" },
+      { name: "🔗 GitHub: Sorting Problems", url: `${GH_TREE}/Problems_On_Sorting`, type: "code" },
+      { name: "Visualgo — Sorting Visualizer", url: "https://visualgo.net/en/sorting", type: "code" },
+    ],
+    tip: "Sorting must be muscle memory. If you can write Bubble Sort and Quick Sort from scratch in under 3 minutes each, you're ready. Use Visualgo to watch them animate — it makes the logic stick permanently.",
+  },
+  {
+    day: 5, label: "Wed, Mar 18",
+    theme: "Advanced Reasoning + Recursion & Advanced Strings",
+    tag: "ADV REASONING + CODING", tagColor: "#EC4899", hours: "3 hrs",
+    aptitudeFocus: "Statement-Conclusion · Data Arrangement · Visual Reasoning · Advanced Puzzles · Cubes · Syllogism",
+    codingFocus: "Recursion + Advanced Number Problems + Advanced String Algorithms + DP Intro",
+    sessions: [
+      {
+        time: "0:00 – 1:05", type: "Aptitude", coding: false,
+        title: "📐 APTITUDE — Full Advanced Reasoning Coverage",
+        desc: "Statement-Conclusion: 3 outcomes — definitely/possibly/does not follow. Exact phrasing matters. Complex Data Arrangement: multi-condition puzzles with 5+ variables — always make a grid. Visual Reasoning: figure series, embedded figures, mirror images, paper-folding. Cube cuts: painted face count formulas for 0/1/2/3 sides. Solve 3 full advanced puzzle sets timed.",
+      },
+      {
+        time: "1:05 – 2:05", type: "Coding", coding: true, diff: "Medium",
+        title: "⚙ CODING — Recursion + Advanced Number Problems",
+        desc: "Recursion = base case + recursive case. Write Fibonacci recursively first — notice the repeated calls. Then add memoization (store results in a map). This is literally how Dynamic Programming works. Every recursive solution has an iterative equivalent — understand both.",
+        problems: [
+          { name: "Fibonacci — Recursive then + Memoization", url: `${GH}/Problems_On_Number/FibonacciSeries.java` },
+          { name: "Factorial — Recursive", url: `${GH}/Problems_On_Number/Factorial.java` },
+          { name: "Power of a Number (recursive)", url: `${GH}/Problems_On_Number/PowerOfNumber.java` },
+          { name: "All Factors of a Number", url: `${GH}/Problems_On_Number/FactorsOfNumber.java` },
+          { name: "All Prime Factors", url: `${GH}/Problems_On_Number/PrimeFactors.java` },
+          { name: "Palindromes in a Given Range", url: `${GH}/Problems_On_Number/PalindromeNumbersInRange.java` },
+          { name: "Can Number = Sum of Two Primes?", url: `${GH}/Problems_On_Number/SumOfTwoPrimes.java` },
+          { name: "Permutations (N people, R seats)", url: `${GH}/Problems_On_Number/Permutations.java` },
+          { name: "Quadratic Equation Roots", url: `${GH}/Problems_On_Number/QuadraticEquationRoots.java` },
+          { name: "Max & Min Digit in a Number", url: `${GH}/Problems_On_Number/MaxMinDigitInNumber.java` },
+        ],
+      },
+      {
+        time: "2:05 – 3:00", type: "Coding", coding: true, diff: "Medium–Hard",
+        title: "⚙ CODING — Advanced Strings + DP Intro Problems",
+        desc: "Harder string problems that combine multiple techniques — this is the Advanced coding difficulty level. Wildcard Match and Common Subsequence at the bottom are genuine DP problems. Solve recursively first, then add a cache.",
+        problems: [
+          { name: "Count Words in String", url: `${GH}/Problems_On_String/WordCount.java` },
+          { name: "Find Largest Word", url: `${GH}/Problems_On_String/LargestWord.java` },
+          { name: "Word with Most Repeated Letters", url: `${GH}/Problems_On_String/WordWithRepeatedLetters.java` },
+          { name: "Sort Characters in String", url: `${GH}/Problems_On_String/SortCharacters.java` },
+          { name: "Find Substring + Starting Position", url: `${GH}/Problems_On_String/SubString.java` },
+          { name: "Remove Characters Present in String 2", url: `${GH}/Problems_On_String/RemoveCharacters.java` },
+          { name: "Remove Non-Alphabets", url: `${GH}/Problems_On_String/RemoveNonAlphabets.java` },
+          { name: "Change Each Letter → Next Alphabet", url: `${GH}/Problems_On_String/NextAlphabet.java` },
+          { name: "Sum of Numbers in a String", url: `${GH}/Problems_On_String/SumOfNumbers.java` },
+          { name: "Remove Brackets from Expression", url: `${GH}/Problems_On_String/RemoveBrackets.java` },
+          { name: "Common Subsequence Count (DP Intro)", url: `${GH}/Problems_On_String/CommonSubsequenceCount.java` },
+          { name: "Wildcard Match (DP Intro)", url: `${GH}/Problems_On_String/WildcardMatch.java` },
+        ],
+      },
+    ],
+    resources: [
+      { name: "PrepInsta Advanced Reasoning", url: "https://prepinsta.com/tcs-nqt/advanced-reasoning/", type: "apt" },
+      { name: "IndiaBix — Advanced Puzzles", url: "https://www.indiabix.com/logical-reasoning/puzzles/", type: "apt" },
+      { name: "🔗 GitHub: Advanced Strings", url: `${GH_TREE}/Problems_On_String`, type: "code" },
+      { name: "GFG: Introduction to Recursion", url: "https://www.geeksforgeeks.org/recursion/", type: "code" },
+    ],
+    tip: "Wildcard Match and Common Subsequence look scary — they're not. Pattern: recursive solution works but is slow → add a HashMap to store results already computed → that IS memoized DP. Done.",
+  },
+  {
+    day: 6, label: "Thu, Mar 19",
+    theme: "Dynamic Programming + Greedy + Full Coding Sprint",
+    tag: "ADVANCED CODING ★", tagColor: "#6366F1", hours: "3 hrs",
+    aptitudeFocus: "Quick Advanced Aptitude Revision — Light (25 min only)",
+    codingFocus: "DP · Greedy · Binary Search · Matrices · All Remaining GitHub Problems",
+    sessions: [
+      {
+        time: "0:00 – 0:25", type: "Aptitude", coding: false,
+        title: "📐 APTITUDE — Quick Advanced Revision (25 min max)",
+        desc: "Today is coding-heavy — limit aptitude to 25 minutes. Revisit: Probability edge cases, Log rules quick recap, P&C combinations tricky cases. Do 15 mixed Advanced Qs from PrepInsta Advanced mock. Then immediately switch to coding.",
+      },
+      {
+        time: "0:25 – 1:20", type: "Coding", coding: true, diff: "Hard",
+        title: "⚙ CODING — Dynamic Programming",
+        desc: "DP = Recursion + Memoization. The pattern: (1) Define recursively, (2) Identify overlapping subproblems, (3) Store in a table. Goal today: recognize the DP pattern and apply it — not master every DP type. Start with recursive solution, then add cache.",
+        problems: [
+          { name: "Common Subsequence Count (full DP)", url: `${GH}/Problems_On_String/CommonSubsequenceCount.java` },
+          { name: "Wildcard String Match (full DP)", url: `${GH}/Problems_On_String/WildcardMatch.java` },
+          { name: "Fibonacci with Memoization", url: `${GH}/Problems_On_Number/FibonacciSeries.java` },
+          { name: "SubArrays — Max Sum (Kadane's Algorithm)", url: `${GH}/SubArrays.java` },
+          { name: "GFG: 0/1 Knapsack (concept + code)", url: "https://www.geeksforgeeks.org/0-1-knapsack-problem-dp-10/" },
+          { name: "GFG: Longest Common Subsequence", url: "https://www.geeksforgeeks.org/longest-common-subsequence-dp-4/" },
+        ],
+      },
+      {
+        time: "1:20 – 2:10", type: "Coding", coding: true, diff: "Medium–Hard",
+        title: "⚙ CODING — Greedy Algorithms + Binary Search",
+        desc: "Greedy: make the locally optimal choice at each step. Coin change, activity selection, fractional knapsack. Binary Search: implement iteratively AND recursively — O(log n) on sorted arrays is a very common Advanced coding pattern.",
+        problems: [
+          { name: "Search Element — Binary Search", url: `${GH}/Problems_on_Arrays/SearchElement.java` },
+          { name: "GFG: Binary Search (iterative + recursive)", url: "https://www.geeksforgeeks.org/binary-search/" },
+          { name: "GFG: Activity Selection (Greedy)", url: "https://www.geeksforgeeks.org/activity-selection-problem-greedy-algo-1/" },
+          { name: "GFG: Fractional Knapsack (Greedy)", url: "https://www.geeksforgeeks.org/fractional-knapsack-problem/" },
+          { name: "GFG: Coin Change (Greedy)", url: "https://www.geeksforgeeks.org/greedy-algorithm-to-find-minimum-number-of-coins/" },
+          { name: "Sort Array by Defined External Order", url: `${GH}/Problems_on_Arrays/SortByDefinedOrder.java` },
+        ],
+      },
+      {
+        time: "2:10 – 3:00", type: "Coding", coding: true, diff: "Medium",
+        title: "⚙ CODING — Matrices + All Remaining GitHub Problems",
+        desc: "Matrix traversal (spiral print, transpose, row/col sums) is a very common TCS Advanced pattern. Then finish all remaining problems from the GitHub sheet that you haven't touched yet.",
+        problems: [
+          { name: "GFG: Spiral Matrix Traversal", url: "https://www.geeksforgeeks.org/print-a-given-matrix-in-spiral-form/" },
+          { name: "GFG: Transpose of a Matrix", url: "https://www.geeksforgeeks.org/program-to-find-transpose-of-a-matrix/" },
+          { name: "Number to Words", url: `${GH}/Problems_On_Number_System/NumberToWords.java` },
+          { name: "Binary to Octal", url: `${GH}/Problems_On_Number_System/BinaryToOctal.java` },
+          { name: "Octal to Binary", url: `${GH}/Problems_On_Number_System/OctalToBinary.java` },
+          { name: "Decimal to Octal", url: `${GH}/Problems_On_Number_System/DecimalToOctal.java` },
+          { name: "Replace 0s with 1s in Number", url: `${GH}/Problems_On_Number/ReplaceZerosWithOnes.java` },
+          { name: "Abundant Number Check", url: `${GH}/Problems_On_Number/AbundantNumberCheck.java` },
+          { name: "Add Two Fractions", url: `${GH}/Problems_On_Number/AddFractions.java` },
+          { name: "Concatenate Strings", url: `${GH}/Problems_On_String/ConcatenateStrings.java` },
+          { name: "Change Case of Each Character", url: `${GH}/Problems_On_String/ChangeCase.java` },
+          { name: "Sum of Numbers in Range", url: `${GH}/Problems_On_Number/SumInRange.java` },
+        ],
+      },
+    ],
+    resources: [
+      { name: "🔗 GitHub: Full Coding Sheet", url: "https://github.com/karthikreddy-7/TCS-NQT-CODING-SHEET", type: "code" },
+      { name: "GFG: Dynamic Programming (Easy)", url: "https://www.geeksforgeeks.org/dynamic-programming/", type: "code" },
+      { name: "GFG: Greedy Algorithms", url: "https://www.geeksforgeeks.org/greedy-algorithms/", type: "code" },
+      { name: "PrepInsta Advanced Coding", url: "https://prepinsta.com/tcs-nqt/coding/", type: "code" },
+    ],
+    tip: "DP is the hardest topic. Just understand memoization cold: if you've computed this subproblem before, return the stored result. That one insight handles 80% of DP questions you'll see.",
+  },
+  {
+    day: 7, label: "Fri, Mar 20",
+    theme: "Full Mock Test + Error Analysis + Coding Revision",
+    tag: "MOCK + FINAL CODING", tagColor: "#06B6D4", hours: "3 hrs",
+    aptitudeFocus: "All Foundation + Advanced sections — Full Timed Mock",
+    codingFocus: "Morning Coding Warm-Up + PYQ Revision + Write Pattern Cheat Sheet",
+    sessions: [
+      {
+        time: "0:00 – 0:45", type: "Coding", coding: true, diff: "Revision",
+        title: "⚙ CODING — Morning Warm-Up: 5 Problems from Memory (Timed)",
+        desc: "Start with coding. Set a 45-minute timer. Write these 5 problems from scratch with zero reference: (1) Prime check, (2) Palindrome string, (3) Reverse array, (4) Fibonacci with memoization, (5) Bubble sort. If you complete all 5 in 45 minutes, your fundamentals are solid for the exam.",
+        problems: [
+          { name: "🌟 PYQ: Push Zeros to End (Chocolate Factory)", url: `${GH}/Previously_Asked_Coding_Question/ChocolateFactory.java` },
+          { name: "🌟 PYQ: Binary Toggle", url: `${GH}/Previously_Asked_Coding_Question/Binary_Representation.java` },
+          { name: "SubArrays Review", url: `${GH}/SubArrays.java` },
+          { name: "practice.java — miscellaneous patterns", url: `${GH}/practice.java` },
+          { name: "checkingalphabets.java", url: `${GH}/checkingalphabets.java` },
+        ],
+      },
+      {
+        time: "0:45 – 2:15", type: "Mock", coding: false,
+        title: "🎯 FULL MOCK TEST — Simulate the Real Exam",
+        desc: "Take ONE complete TCS NQT full mock under strict exam conditions: timer on, no breaks, no revisiting questions, phone away. Order: Foundation (Numerical → Verbal → Reasoning → DI) then Advanced (Adv Quant → Adv Reasoning → Adv Coding). For coding: write actual runnable code. Use PrepInsta Full Mock or GFG TCS Test Series.",
+      },
+      {
+        time: "2:15 – 3:00", type: "Review", coding: true,
+        title: "📋 ERROR ANALYSIS + CODING CHEAT SHEET",
+        desc: "Categorize every wrong answer: (A) Concept gap → re-read the formula now. (B) Silly error → note the pattern. (C) Time pressure → accept and move on. For coding: write a 1-page personal cheat sheet of patterns (palindrome template, prime template, array traversal, sorting, binary search, memoization). Sleep early — confident and rested beats cramming.",
+        problems: [
+          { name: "Full GitHub Sheet — Reference", url: "https://github.com/karthikreddy-7/TCS-NQT-CODING-SHEET" },
+          { name: "Previously Asked Questions folder", url: `${GH_TREE}/Previously_Asked_Coding_Question` },
+        ],
+      },
+    ],
+    resources: [
+      { name: "PrepInsta Full TCS NQT Mock", url: "https://prepinsta.com/tcs-nqt/mock/", type: "apt" },
+      { name: "GFG TCS NQT Test Series", url: "https://practice.geeksforgeeks.org/courses/tcs-nqt-test-series", type: "apt" },
+      { name: "TCS iON Official Sample Paper", url: "https://www.tcsion.com/hub/national-qualifier-test/", type: "apt" },
+      { name: "🔗 GitHub: All PYQs", url: `${GH_TREE}/Previously_Asked_Coding_Question`, type: "code" },
+    ],
+    tip: "You've practiced coding every single day this week. On exam day: read the problem TWICE before writing a line. Partial credit exists — a brute-force that handles 3/5 test cases scores better than a blank.",
+  },
+];
+
+// ── Styles ────────────────────────────────────────────────────────────────────
+const typeStyle = {
+  Aptitude:       { bg:"#0f2040", text:"#93c5fd", border:"#1e4080", icon:"📐" },
+  Coding:         { bg:"#240f38", text:"#d8b4fe", border:"#5b21b6", icon:"⚙" },
+  Mock:           { bg:"#3b1f1f", text:"#fca5a5", border:"#7f1d1d", icon:"🎯" },
+  Review:         { bg:"#2a2010", text:"#fcd34d", border:"#78350f", icon:"📋" },
+};
+const diffBadge = {
+  "Easy":         { bg:"#0a2a0a", text:"#4ade80", border:"#14532d" },
+  "Easy–Medium":  { bg:"#1a2a0a", text:"#a3e635", border:"#365314" },
+  "Medium":       { bg:"#2a1a0a", text:"#fb923c", border:"#7c2d12" },
+  "Medium–Hard":  { bg:"#2a0a1a", text:"#f472b6", border:"#831843" },
+  "Hard":         { bg:"#3b0a0a", text:"#f87171", border:"#7f1d1d" },
+  "Revision":     { bg:"#0a1a2a", text:"#38bdf8", border:"#0c4a6e" },
+};
+
+// ── App ───────────────────────────────────────────────────────────────────────
+function App() {
+  const [activeDay, setActiveDay]         = useState(0);
+  const [completed, setCompleted]         = useState({});
+  const [expanded, setExpanded]           = useState({});
+  const [notes, setNotes]                 = useState({});
+  const [noteText, setNoteText]           = useState("");
+  const [view, setView]                   = useState("all");
+  const [loading, setLoading]             = useState(true);
+  const [saving, setSaving]               = useState(false);
+  const [toast, setToast]                 = useState(null);
+  const [showReset, setShowReset]         = useState(false);
+  const noteTimer                         = useRef(null);
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2000);
+  };
+
+  // Load progress + notes on mount
+  useEffect(() => {
+    Promise.all([
+      fetch(`${API}/progress`).then(r => r.json()),
+      fetch(`${API}/notes`).then(r => r.json()),
+    ]).then(([prog, nts]) => {
+      setCompleted(prog);
+      setNotes(nts);
+      setLoading(false);
+    }).catch(() => {
+      setLoading(false);
+      showToast("⚠ Could not connect to server — is it running?");
+    });
+  }, []);
+
+  // Update note text when day changes
+  useEffect(() => {
+    setNoteText(notes[activeDay] || "");
+  }, [activeDay, notes]);
+
+  const toggleSession = async (di, si) => {
+    const key = `${di}-${si}`;
+    const newVal = !completed[key];
+    setSaving(true);
+    setCompleted(p => ({ ...p, [key]: newVal }));
+    try {
+      await fetch(`${API}/progress`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, completed: newVal }),
+      });
+      showToast(newVal ? "✓ Session marked complete" : "Session unmarked");
+    } catch {
+      showToast("⚠ Save failed — check server");
+    }
+    setSaving(false);
+  };
+
+  const toggleProblems = (di, si) => {
+    const k = `${di}-${si}`;
+    setExpanded(p => ({ ...p, [k]: !p[k] }));
+  };
+
+  const saveNote = useCallback((text) => {
+    fetch(`${API}/notes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dayIndex: activeDay, content: text }),
+    }).catch(() => {});
+  }, [activeDay]);
+
+  const handleNoteChange = (e) => {
+    const text = e.target.value;
+    setNoteText(text);
+    setNotes(p => ({ ...p, [activeDay]: text }));
+    clearTimeout(noteTimer.current);
+    noteTimer.current = setTimeout(() => saveNote(text), 800);
+  };
+
+  const handleReset = async () => {
+    await fetch(`${API}/progress/reset`, { method: "POST" });
+    setCompleted({});
+    setShowReset(false);
+    showToast("Progress reset to zero");
+  };
+
+  // Stats
+  const totalSessions  = days.reduce((a, d) => a + d.sessions.length, 0);
+  const doneCount      = Object.values(completed).filter(Boolean).length;
+  const codingSessions = days.reduce((a, d) => a + d.sessions.filter(s => s.coding).length, 0);
+  const codingDone     = days.reduce((a, d, di) => a + d.sessions.filter((s, si) => s.coding && completed[`${di}-${si}`]).length, 0);
+  const overallPct     = Math.round((doneCount / totalSessions) * 100) || 0;
+  const codingPct      = Math.round((codingDone / codingSessions) * 100) || 0;
+
+  const day = days[activeDay];
+  const filteredSessions = day.sessions.filter(s => {
+    if (view === "coding")   return s.coding || s.type === "Coding";
+    if (view === "aptitude") return s.type === "Aptitude";
+    return true;
+  });
+
+  if (loading) return (
+    <div style={{ height:"100vh", display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:16 }}>
+      <div style={{ width:32, height:32, border:"3px solid #1e2d45", borderTopColor:"#6366f1", borderRadius:"50%", animation:"spin 0.8s linear infinite" }} />
+      <div style={{ fontSize:12, color:"#3d4f6e", letterSpacing:"0.2em" }}>LOADING FROM DATABASE...</div>
+    </div>
+  );
+
+  return (
+    <div style={{ height:"100vh", display:"flex", flexDirection:"column", overflow:"hidden" }}>
+      {/* Toast */}
+      {toast && <div className="toast">{toast}</div>}
+
+      {/* Reset confirm */}
+      {showReset && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center" }}>
+          <div style={{ background:"#0f1525", border:"1px solid #7f1d1d", borderRadius:10, padding:28, maxWidth:360, textAlign:"center" }}>
+            <div style={{ fontSize:14, color:"#f87171", fontFamily:"sans-serif", marginBottom:12, fontWeight:700 }}>Reset all progress?</div>
+            <div style={{ fontSize:11, color:"#64748b", fontFamily:"sans-serif", marginBottom:20, lineHeight:1.6 }}>This will clear all completed sessions from the database. Your notes will be kept.</div>
+            <div style={{ display:"flex", gap:10, justifyContent:"center" }}>
+              <button onClick={handleReset} style={{ padding:"8px 20px", background:"#7f1d1d", border:"1px solid #ef4444", color:"#fca5a5", borderRadius:5, cursor:"pointer", fontSize:11, fontFamily:"monospace" }}>YES, RESET</button>
+              <button onClick={() => setShowReset(false)} style={{ padding:"8px 20px", background:"#0a1020", border:"1px solid #1e2d45", color:"#64748b", borderRadius:5, cursor:"pointer", fontSize:11, fontFamily:"monospace" }}>CANCEL</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={{ background:"linear-gradient(135deg,#080918 0%,#0f0a24 50%,#080918 100%)", borderBottom:"2px solid #1a2235", padding:"14px 20px 11px", flexShrink:0 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:10 }}>
+          <div>
+            <div style={{ fontSize:8, letterSpacing:"0.35em", color:"#6366f1", marginBottom:3, fontWeight:800 }}>
+              TCS NQT 2026 · 7-DAY TRACKER · LOCAL + PERSISTENT
+              {saving && <span style={{ marginLeft:12, color:"#fbbf24" }}>⟳ SAVING...</span>}
+            </div>
+            <h1 style={{ margin:"0 0 3px", fontSize:"clamp(13px,2.5vw,20px)", fontWeight:900, color:"#f8fafc", letterSpacing:"-0.02em", lineHeight:1.15 }}>
+              FULL SYLLABUS · DAILY CODING · GITHUB PYQs
+            </h1>
+            <div style={{ fontSize:9, color:"#3d4f6e", fontFamily:"sans-serif" }}>
+              Progress saved to <code style={{ color:"#6366f1", fontSize:9 }}>progress.db</code> · Restored every session · Mar 14–20, 2026
+            </div>
+          </div>
+          <div style={{ display:"flex", gap:14, alignItems:"flex-start", flexShrink:0 }}>
+            {[
+              { label:"OVERALL", pct:overallPct, sub:`${doneCount}/${totalSessions}`, color:"#6366f1", grad:"#6366f1,#a78bfa" },
+              { label:"CODING",  pct:codingPct,  sub:`${codingDone}/${codingSessions}`, color:"#ec4899", grad:"#ec4899,#f472b6" },
+            ].map(s => (
+              <div key={s.label} style={{ textAlign:"right" }}>
+                <div style={{ fontSize:7, color:"#3d4f6e", letterSpacing:"0.1em", marginBottom:2 }}>{s.label}</div>
+                <div style={{ fontSize:26, fontWeight:900, color:s.color, lineHeight:1 }}>{s.pct}%</div>
+                <div style={{ fontSize:8, color:"#3d4f6e", marginTop:1 }}>{s.sub}</div>
+                <div style={{ marginTop:3, height:3, background:"#1a2235", borderRadius:2, width:82 }}>
+                  <div style={{ height:"100%", width:`${s.pct}%`, background:`linear-gradient(90deg,${s.grad})`, borderRadius:2, transition:"width 0.4s" }} />
+                </div>
+              </div>
+            ))}
+            <button onClick={() => setShowReset(true)} style={{ fontSize:8, color:"#ef4444", background:"transparent", border:"1px solid #7f1d1d", borderRadius:4, padding:"4px 8px", cursor:"pointer", fontFamily:"monospace", marginTop:18, letterSpacing:"0.1em" }}>
+              RESET
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Info bar */}
+      <div style={{ display:"flex", background:"#07090f", borderBottom:"1px solid #1a2235", overflowX:"auto", flexShrink:0 }}>
+        {[
+          { l:"📐 APTITUDE", d:"Foundation + Advanced · every day", c:"#60a5fa" },
+          { l:"⚙ CODING",   d:"GitHub sheet · PYQs · EVERY DAY", c:"#ec4899" },
+          { l:"ADV CODING ★",d:"DP · Greedy · Sorting · Recursion · D6", c:"#a78bfa" },
+          { l:"NO NEGATIVE", d:"Attempt every question", c:"#34d399" },
+          { l:"QUESTION LOCK",d:"Cannot revisit questions", c:"#fbbf24" },
+          { l:"MAR 14–20",   d:"Sat → Fri · 7 days", c:"#94a3b8" },
+        ].map((x, i) => (
+          <div key={i} style={{ padding:"6px 14px", borderRight:"1px solid #1a2235", whiteSpace:"nowrap", flexShrink:0 }}>
+            <div style={{ fontSize:7, fontWeight:800, color:x.c, letterSpacing:"0.14em" }}>{x.l}</div>
+            <div style={{ fontSize:9, color:"#1e2d45", marginTop:1, fontFamily:"sans-serif" }}>{x.d}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display:"flex", flex:1, minHeight:0 }}>
+        {/* Day Sidebar */}
+        <div style={{ width:170, flexShrink:0, background:"#07090f", borderRight:"1px solid #1a2235", overflowY:"auto", padding:"10px 0" }}>
+          <div style={{ fontSize:7, letterSpacing:"0.22em", color:"#1a2235", padding:"0 11px 7px", fontWeight:800 }}>SELECT DAY</div>
+          {days.map((d, i) => {
+            const done      = d.sessions.filter((_,si) => completed[`${i}-${si}`]).length;
+            const allDone   = done === d.sessions.length;
+            const codDone   = d.sessions.filter((s,si) => s.coding && completed[`${i}-${si}`]).length;
+            const codTotal  = d.sessions.filter(s => s.coding).length;
+            const pct       = Math.round((done / d.sessions.length) * 100);
+            return (
+              <button key={i} onClick={() => setActiveDay(i)} style={{ display:"block", width:"100%", textAlign:"left", padding:"9px 11px", border:"none", cursor:"pointer", background:activeDay===i?"#0c1118":"transparent", borderLeft:activeDay===i?`3px solid ${d.tagColor}`:"3px solid transparent", transition:"all 0.15s" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                  <span style={{ fontSize:7, color:activeDay===i?d.tagColor:"#1a2235", letterSpacing:"0.12em", fontWeight:800 }}>DAY {d.day}</span>
+                  {allDone?<span style={{ fontSize:9, color:"#34d399" }}>✓</span>:done>0?<span style={{ fontSize:7, color:"#3d4f6e" }}>{done}/{d.sessions.length}</span>:null}
+                </div>
+                <div style={{ fontSize:10, color:activeDay===i?"#e2e8f0":"#2d3d5a", marginTop:2, fontFamily:"sans-serif", fontWeight:activeDay===i?700:400 }}>{d.label}</div>
+                <div style={{ display:"flex", gap:4, marginTop:2, alignItems:"center" }}>
+                  <span style={{ fontSize:7, color:"#1a2235" }}>📐</span>
+                  <span style={{ fontSize:7, color:codDone===codTotal&&codTotal>0?"#ec4899":"#2a1438", fontFamily:"sans-serif" }}>⚙{codDone}/{codTotal}</span>
+                </div>
+                {done>0&&(<div style={{ marginTop:4, height:2, background:"#1a2235", borderRadius:1 }}><div style={{ height:"100%", width:`${pct}%`, background:allDone?"#34d399":d.tagColor, borderRadius:1, transition:"width 0.3s" }} /></div>)}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Main */}
+        <div style={{ flex:1, overflowY:"auto", padding:"14px 18px" }}>
+          {/* Day header */}
+          <div style={{ marginBottom:12 }}>
+            <div style={{ display:"flex", gap:7, alignItems:"center", marginBottom:5, flexWrap:"wrap" }}>
+              <span style={{ fontSize:7, fontWeight:800, letterSpacing:"0.2em", background:day.tagColor+"1a", color:day.tagColor, padding:"3px 8px", borderRadius:3 }}>{day.tag}</span>
+              <span style={{ fontSize:8, color:"#2d3d5a" }}>DAY {day.day} · {day.label} · {day.hours}</span>
+            </div>
+            <h2 style={{ margin:"0 0 8px", fontSize:"clamp(12px,2vw,17px)", fontWeight:800, color:"#f1f5f9" }}>{day.theme}</h2>
+            <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:8 }}>
+              {[
+                { icon:"📐", label:"APTITUDE", text:day.aptitudeFocus, bg:"#0f2040", border:"#1e4080", col:"#60a5fa" },
+                { icon:"⚙", label:"CODING",   text:day.codingFocus,   bg:"#180830", border:"#4c1d95", col:"#ec4899" },
+              ].map(b => (
+                <div key={b.label} style={{ background:b.bg, border:`1px solid ${b.border}`, borderRadius:5, padding:"5px 10px", flex:1, minWidth:160 }}>
+                  <div style={{ fontSize:7, color:b.col, letterSpacing:"0.14em", fontWeight:800, marginBottom:2 }}>{b.icon} {b.label}</div>
+                  <div style={{ fontSize:9, color:"#4d6080", fontFamily:"sans-serif", lineHeight:1.5 }}>{b.text}</div>
+                </div>
+              ))}
+            </div>
+            {/* Filter */}
+            <div style={{ display:"flex", gap:5 }}>
+              {["all","aptitude","coding"].map(v=>(
+                <button key={v} onClick={()=>setView(v)} style={{ fontSize:7, padding:"3px 10px", borderRadius:4, border:`1px solid ${view===v?"#6366f1":"#1a2235"}`, background:view===v?"#14143a":"transparent", color:view===v?"#a78bfa":"#2d3d5a", cursor:"pointer", fontFamily:"monospace", letterSpacing:"0.1em", textTransform:"uppercase" }}>
+                  {v==="all"?"All":v==="aptitude"?"📐 Aptitude":"⚙ Coding"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Sessions */}
+          <div style={{ display:"flex", flexDirection:"column", gap:7, marginBottom:12 }}>
+            {filteredSessions.map(session => {
+              const si  = day.sessions.indexOf(session);
+              const key = `${activeDay}-${si}`;
+              const done = !!completed[key];
+              const ts  = typeStyle[session.type] || typeStyle.Aptitude;
+              const ds  = session.diff ? diffBadge[session.diff] : null;
+              const exp = !!expanded[key];
+              return (
+                <div key={si} style={{ background:done?(session.coding?"#07100a":"#070d10"):(session.coding?"#0b0918":"#090e1c"), border:`1px solid ${done?(session.coding?"#162a1a":"#0f1e2a"):(session.coding?"#2a1040":"#1a2235")}`, borderRadius:7, padding:"11px 13px", opacity:done?0.55:1, transition:"all 0.2s" }}>
+                  <div style={{ display:"flex", gap:9, alignItems:"flex-start" }}>
+                    <button onClick={()=>toggleSession(activeDay,si)} style={{ width:18, height:18, borderRadius:"50%", flexShrink:0, marginTop:3, border:`2px solid ${done?"#34d399":"#2d3d5a"}`, background:done?"#34d399":"transparent", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", fontSize:9, color:done?"#07090f":"transparent", transition:"all 0.2s" }}>✓</button>
+                    <div style={{ flex:1 }}>
+                      <div style={{ display:"flex", gap:5, alignItems:"center", marginBottom:4, flexWrap:"wrap" }}>
+                        <span style={{ fontSize:8, fontFamily:"monospace", color:"#2d3d5a" }}>{session.time}</span>
+                        <span style={{ fontSize:7, fontWeight:800, letterSpacing:"0.12em", background:ts.bg, color:ts.text, border:`1px solid ${ts.border}`, padding:"1px 5px", borderRadius:3 }}>{ts.icon} {session.type.toUpperCase()}</span>
+                        {ds&&<span style={{ fontSize:7, fontWeight:800, letterSpacing:"0.1em", background:ds.bg, color:ds.text, border:`1px solid ${ds.border}`, padding:"1px 5px", borderRadius:3 }}>{session.diff}</span>}
+                      </div>
+                      <div style={{ fontSize:12, fontWeight:700, color:done?"#3d4f6e":"#f1f5f9", marginBottom:4, fontFamily:"sans-serif", textDecoration:done?"line-through":"none" }}>{session.title}</div>
+                      <div style={{ fontSize:11, color:"#3d5070", fontFamily:"sans-serif", lineHeight:1.65 }}>{session.desc}</div>
+                      {session.problems&&(
+                        <div style={{ marginTop:7 }}>
+                          <button onClick={()=>toggleProblems(activeDay,si)} style={{ fontSize:7, color:"#9d6eef", background:"transparent", border:"1px solid #3b0764", borderRadius:3, padding:"2px 9px", cursor:"pointer", fontFamily:"monospace", letterSpacing:"0.1em" }}>
+                            {exp?"▲ HIDE":"▼ SHOW"} {session.problems.length} PROBLEMS →
+                          </button>
+                          {exp&&(
+                            <div style={{ marginTop:5, display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))", gap:3 }}>
+                              {session.problems.map((p,pi)=>{
+                                const isPyq = p.name.startsWith("🌟");
+                                const isGfg = p.url.includes("geeksforgeeks");
+                                return (
+                                  <a key={pi} href={p.url} target="_blank" rel="noopener noreferrer" style={{ display:"flex", alignItems:"center", gap:5, padding:"4px 8px", background:isPyq?"#18071e":isGfg?"#071810":"#0c0716", border:`1px solid ${isPyq?"#6b1050":isGfg?"#134523":"#2e0656"}`, borderRadius:4, color:isPyq?"#f472b6":isGfg?"#4ade80":"#b07ef4", fontSize:10, fontFamily:"sans-serif", textDecoration:"none", fontWeight:isPyq?700:400 }}>
+                                    <span style={{ fontSize:7, flexShrink:0, color:isPyq?"#be185d":isGfg?"#16a34a":"#6b21a8" }}>→</span>
+                                    {p.name}
+                                  </a>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Resources */}
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:7, marginBottom:8 }}>
+            {["apt","code"].map(t => (
+              <div key={t} style={{ background:t==="apt"?"#091428":"#110728", border:`1px solid ${t==="apt"?"#1a3a6e":"#3b1068"}`, borderRadius:6, padding:"10px 12px" }}>
+                <div style={{ fontSize:7, letterSpacing:"0.18em", color:t==="apt"?"#3b82f6":"#a78bfa", fontWeight:800, marginBottom:7 }}>{t==="apt"?"📐 APTITUDE RESOURCES":"⚙ CODING RESOURCES"}</div>
+                <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                  {day.resources.filter(r=>r.type===t).map((r,i)=>(
+                    <a key={i} href={r.url} target="_blank" rel="noopener noreferrer" style={{ display:"flex", alignItems:"center", gap:5, color:r.name.startsWith("🔗")?"#f472b6":t==="apt"?"#60a5fa":"#c084fc", fontSize:10, fontFamily:"sans-serif", textDecoration:"none" }}>
+                      <span style={{ fontSize:7, color:t==="apt"?"#1e4080":"#5b21b6" }}>→</span>{r.name}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Notes */}
+          <div style={{ background:"#090c18", border:"1px solid #1a3050", borderRadius:6, padding:"10px 12px", marginBottom:8 }}>
+            <div style={{ fontSize:7, letterSpacing:"0.18em", color:"#475569", fontWeight:800, marginBottom:6 }}>📝 MY NOTES — DAY {day.day} (auto-saved)</div>
+            <textarea
+              value={noteText}
+              onChange={handleNoteChange}
+              placeholder="Jot down concepts, mistakes, formulas to remember..."
+              style={{ width:"100%", background:"#050810", border:"1px solid #1a2235", borderRadius:4, color:"#94a3b8", fontSize:11, fontFamily:"sans-serif", padding:"8px 10px", resize:"vertical", minHeight:64, outline:"none", lineHeight:1.6 }}
+            />
+          </div>
+
+          {/* Tip */}
+          <div style={{ background:"#0e0a02", border:"1px solid #6b3a08", borderRadius:6, padding:"10px 12px", display:"flex", gap:8, alignItems:"flex-start" }}>
+            <span style={{ fontSize:13, flexShrink:0 }}>💡</span>
+            <div>
+              <div style={{ fontSize:7, letterSpacing:"0.18em", color:"#d97706", fontWeight:800, marginBottom:3 }}>PRO TIP</div>
+              <div style={{ fontSize:11, color:"#92400e", fontFamily:"sans-serif", lineHeight:1.7 }}>{day.tip}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right panel */}
+        <div style={{ width:186, flexShrink:0, background:"#07090f", borderLeft:"1px solid #1a2235", overflowY:"auto", padding:"10px" }}>
+          <div style={{ fontSize:7, letterSpacing:"0.2em", color:"#1a2235", fontWeight:800, marginBottom:7 }}>WEEK AT A GLANCE</div>
+          {days.map((d,i) => {
+            const done     = d.sessions.filter((_,si)=>completed[`${i}-${si}`]).length;
+            const codDone  = d.sessions.filter((s,si)=>s.coding&&completed[`${i}-${si}`]).length;
+            const codTotal = d.sessions.filter(s=>s.coding).length;
+            const pct      = Math.round((done/d.sessions.length)*100);
+            const isToday  = i === activeDay;
+            return (
+              <div key={i} onClick={()=>setActiveDay(i)} style={{ cursor:"pointer", padding:"7px 7px", borderRadius:5, marginBottom:3, background:isToday?"#0c1118":"transparent", border:isToday?`1px solid ${d.tagColor}44`:"1px solid transparent" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:2 }}>
+                  <span style={{ fontSize:8, color:isToday?d.tagColor:"#1a2235", fontWeight:800 }}>D{d.day} {d.label.slice(0,3).toUpperCase()}</span>
+                  <span style={{ fontSize:7, color:pct===100?"#34d399":"#2d3d5a" }}>{pct===100?"✓":pct>0?`${pct}%`:""}</span>
+                </div>
+                <div style={{ height:2, background:"#111827", borderRadius:1, marginBottom:2 }}>
+                  <div style={{ height:"100%", width:`${pct}%`, background:pct===100?"#34d399":d.tagColor, borderRadius:1, transition:"width 0.3s" }} />
+                </div>
+                <div style={{ display:"flex", justifyContent:"space-between" }}>
+                  <span style={{ fontSize:7, color:"#1a2235", fontFamily:"sans-serif" }}>{d.label.slice(4)}</span>
+                  <span style={{ fontSize:7, color:codDone===codTotal&&codTotal>0?"#ec4899":"#2a1438" }}>⚙{codDone}/{codTotal}</span>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Coding roadmap */}
+          <div style={{ marginTop:10, background:"#080a14", borderRadius:6, border:"1px solid #1a2235", padding:"8px 9px" }}>
+            <div style={{ fontSize:7, color:"#ec4899", letterSpacing:"0.18em", fontWeight:800, marginBottom:6 }}>⚙ CODING ROADMAP</div>
+            {[
+              { d:"D1 SAT", t:"Numbers + Base Conversion", c:"#F59E0B" },
+              { d:"D2 SUN", t:"Arrays — all basics", c:"#8B5CF6" },
+              { d:"D3 MON", t:"Strings + PYQs", c:"#10B981" },
+              { d:"D4 TUE", t:"Sorting (5 algos) + Adv Arrays", c:"#F97316" },
+              { d:"D5 WED", t:"Recursion + Adv Strings + DP Intro", c:"#EC4899" },
+              { d:"D6 THU", t:"DP · Greedy · Search · Matrices ★", c:"#6366F1" },
+              { d:"D7 FRI", t:"Warm-up + PYQ Revision", c:"#06B6D4" },
+            ].map((x,i)=>(
+              <div key={i} style={{ display:"flex", gap:5, alignItems:"flex-start", marginBottom:5 }}>
+                <span style={{ fontSize:7, color:x.c, fontWeight:800, flexShrink:0, minWidth:42 }}>{x.d}</span>
+                <span style={{ fontSize:9, color:"#2d3d5a", fontFamily:"sans-serif", lineHeight:1.4 }}>{x.t}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* GitHub link */}
+          <a href="https://github.com/karthikreddy-7/TCS-NQT-CODING-SHEET" target="_blank" rel="noopener noreferrer" style={{ display:"block", marginTop:8, padding:"8px", background:"#110720", border:"1px solid #4c1d95", borderRadius:6, textDecoration:"none", textAlign:"center" }}>
+            <div style={{ fontSize:12, marginBottom:2 }}>⚙</div>
+            <div style={{ fontSize:7, color:"#c084fc", fontWeight:800, letterSpacing:"0.1em" }}>GITHUB CODING SHEET</div>
+            <div style={{ fontSize:7, color:"#5b21b6", marginTop:1, fontFamily:"sans-serif" }}>karthikreddy-7 · 428 ★</div>
+          </a>
+
+          {/* Exam facts */}
+          <div style={{ marginTop:8, background:"#08111e", borderRadius:6, border:"1px solid #1a3050", padding:"8px 9px" }}>
+            <div style={{ fontSize:7, color:"#3b82f6", letterSpacing:"0.16em", fontWeight:800, marginBottom:5 }}>EXAM FACTS</div>
+            {[["Foundation","75 min · 65 Qs"],["Advanced","115 min · ~27 Qs"],["Coding","3 Problems"],["Negative","None ✓"],["Revisit Qs","No ✗"],["Valid for","2 years"]].map(([k,v])=>(
+              <div key={k} style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
+                <span style={{ fontSize:7, color:"#1a2235" }}>{k}</span>
+                <span style={{ fontSize:7, color:"#2d3d5a", textAlign:"right" }}>{v}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

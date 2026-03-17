@@ -1,0 +1,14 @@
+{
+  "name": "tcs-nqt-tracker",
+  "version": "1.0.0",
+  "description": "TCS NQT 7-Day Study Tracker with persistent progress",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  }
+}
